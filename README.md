@@ -225,5 +225,5 @@ cores with thin terminal adapters, described in
 ---
 
 The name **C23 Systems Toolkit** describes a growing collection of complete,
-reusable C programs without tying the repository to one data structure, format,
-or historical course.
+reusable C programs without tying the repository to one data structure or
+format.
