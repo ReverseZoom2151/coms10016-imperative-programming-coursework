@@ -79,7 +79,7 @@ static void draw_line(FILE *output, unsigned x0, unsigned y0, unsigned x1, unsig
     write_byte(output, 0x80);
 }
 
-static void write_gallery(const char *path) {
+static void write_gallery(const char *path, unsigned stage) {
     FILE *output = fopen(path, "wb");
     if (output == NULL) {
         perror(path);
@@ -88,12 +88,16 @@ static void write_gallery(const char *path) {
 
     draw_block(output, 0, 0, 31, 19, 238);
     draw_block(output, 2, 2, 29, 17, 210);
-    draw_block(output, 6, 5, 9, 14, 255);
-    draw_block(output, 9, 5, 20, 7, 255);
-    draw_block(output, 9, 12, 20, 14, 255);
-    draw_block(output, 9, 8, 13, 11, 210);
-    draw_line(output, 22, 5, 26, 9, 0);
-    draw_line(output, 26, 9, 22, 13, 0);
+    if (stage >= 2) {
+        draw_block(output, 6, 5, 9, 14, 255);
+        draw_block(output, 9, 5, 20, 7, 255);
+        draw_block(output, 9, 12, 20, 14, 255);
+        draw_block(output, 9, 8, 13, 11, 210);
+    }
+    if (stage >= 3) {
+        draw_line(output, 22, 5, 26, 9, 0);
+        draw_line(output, 26, 9, 22, 13, 0);
+    }
 
     if (fclose(output) != 0) {
         perror(path);
@@ -108,6 +112,8 @@ int main(void) {
     write_stream("line.sk", line, sizeof(line));
     write_stream("blocks.sk", blocks, sizeof(blocks));
     write_stream("clipping.sk", clipping, sizeof(clipping));
-    write_gallery("gallery.sk");
+    write_gallery("gallery-frame-1.sk", 1);
+    write_gallery("gallery-frame-2.sk", 2);
+    write_gallery("gallery.sk", 3);
     return EXIT_SUCCESS;
 }

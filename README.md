@@ -125,6 +125,18 @@ Regenerate it from the committed binary fixture:
 ./build/sketch-svg examples/gallery.sk examples/gallery.svg --scale 20 32 20
 ```
 
+The same decoder also writes a looping GIF from complete sketch frames. This
+animation builds the gallery panel, the block-based **C**, then the chevron:
+
+<p align="center">
+  <img src="examples/gallery.gif" alt="Animated gallery assembled from three decoded binary sketch frames" width="640" />
+</p>
+
+```bash
+./build/sketch-gif examples/gallery.gif examples/gallery-frame-1.sk \
+  examples/gallery-frame-2.sk examples/gallery.sk --delay 45 32 20
+```
+
 Run `sketch-inspect` to see the corresponding instruction trace, including the
 opcode byte, accumulated data, cursor/target movement, drawing tool, colour,
 and frame number. Golden ASCII, P2 PGM, SVG, and trace outputs live alongside
@@ -138,6 +150,7 @@ sketch-view INPUT.sk [WIDTH HEIGHT]
 sketch-inspect INPUT.sk
 sketch-pgm INPUT.sk OUTPUT.pgm [--plain] [--invert] [--scale N] [WIDTH HEIGHT]
 sketch-svg INPUT.sk OUTPUT.svg [--invert] [--scale N] [WIDTH HEIGHT]
+sketch-gif OUTPUT.gif INPUT.sk... [--delay CENTISECONDS] [--invert] [WIDTH HEIGHT]
 ```
 
 `TYPE` is one of `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, or `u64`.

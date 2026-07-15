@@ -66,6 +66,16 @@ int main(void) {
     assert(strstr(svg_header, "width=\"15\"") != NULL);
     assert(fclose(svg) == 0);
     assert(remove("sketch-test.svg") == 0);
+
+    const sketch_canvas *frames[] = {canvas, canvas};
+    assert(sketch_write_gif(frames, 2, "sketch-test.gif", 20, false) == SKETCH_OK);
+    FILE *gif = fopen("sketch-test.gif", "rb");
+    assert(gif != NULL);
+    char gif_header[7] = {0};
+    assert(fread(gif_header, 1, 6, gif) == 6);
+    assert(strcmp(gif_header, "GIF89a") == 0);
+    assert(fclose(gif) == 0);
+    assert(remove("sketch-test.gif") == 0);
     sketch_canvas_destroy(canvas);
     return 0;
 }

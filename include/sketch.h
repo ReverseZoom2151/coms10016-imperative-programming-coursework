@@ -40,6 +40,10 @@ sketch_status sketch_write_pgm_options(const sketch_canvas *canvas, const char *
 /* Write a dependency-free, pixel-faithful SVG preview. */
 sketch_status sketch_write_svg(const sketch_canvas *canvas, const char *path,
                                bool invert, size_t scale);
+/* Write same-sized canvases as a looping grayscale GIF animation. */
+sketch_status sketch_write_gif(const sketch_canvas *const *frames, size_t frame_count,
+                               const char *path, uint16_t delay_centiseconds,
+                               bool invert);
 
 /* Print a deterministic, human-readable execution trace without rasterising. */
 sketch_status sketch_inspect_bytes(FILE *output, const uint8_t *bytes, size_t length);

@@ -492,6 +492,125 @@ sketch_status sketch_write_svg(const sketch_canvas *canvas, const char *path,
     return status;
 }
 
+static bool gif_write_byte(FILE *output, uint8_t value) {
+    return fputc(value, output) != EOF;
+}
+
+static bool gif_write_le16(FILE *output, uint16_t value) {
+    return gif_write_byte(output, (uint8_t)(value & UINT8_MAX)) &&
+           gif_write_byte(output, (uint8_t)(value >> 8));
+}
+
+static bool gif_flush_block(FILE *output, uint8_t block[255], size_t *length) {
+    if (*length == 0) {
+        return true;
+    }
+    bool success = gif_write_byte(output, (uint8_t)*length) &&
+                   fwrite(block, 1, *length, output) == *length;
+    *length = 0;
+    return success;
+}
+
+static bool gif_write_code(FILE *output, uint8_t block[255], size_t *length,
+                           uint32_t *buffer, unsigned *buffer_bits, uint16_t code) {
+    *buffer |= (uint32_t)code << *buffer_bits;
+    *buffer_bits += 9;
+    while (*buffer_bits >= 8) {
+        block[(*length)++] = (uint8_t)*buffer;
+        *buffer >>= 8;
+        *buffer_bits -= 8;
+        if (*length == 255 && !gif_flush_block(output, block, length)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool gif_write_indices(FILE *output, const sketch_canvas *canvas, bool invert) {
+    enum { GIF_MIN_CODE_SIZE = 8, GIF_CLEAR = 256, GIF_END = 257 };
+    uint8_t block[255];
+    size_t block_length = 0;
+    uint32_t buffer = 0;
+    unsigned buffer_bits = 0;
+    if (!gif_write_byte(output, GIF_MIN_CODE_SIZE) ||
+        !gif_write_code(output, block, &block_length, &buffer, &buffer_bits,
+                        GIF_CLEAR)) {
+        return false;
+    }
+    size_t pixel_count = canvas->width * canvas->height;
+    for (size_t index = 0; index < pixel_count; index++) {
+        uint8_t pixel = canvas->pixels[index];
+        uint8_t value = invert ? (uint8_t)(UINT8_MAX - pixel) : pixel;
+        if (!gif_write_code(output, block, &block_length, &buffer, &buffer_bits,
+                            value) ||
+            !gif_write_code(output, block, &block_length, &buffer, &buffer_bits,
+                            GIF_CLEAR)) {
+            return false;
+        }
+    }
+    if (!gif_write_code(output, block, &block_length, &buffer, &buffer_bits, GIF_END)) {
+        return false;
+    }
+    if (buffer_bits != 0) {
+        block[block_length++] = (uint8_t)buffer;
+    }
+    return gif_flush_block(output, block, &block_length) && gif_write_byte(output, 0);
+}
+
+sketch_status sketch_write_gif(const sketch_canvas *const *frames, size_t frame_count,
+                               const char *path, uint16_t delay_centiseconds,
+                               bool invert) {
+    if (frames == NULL || frame_count == 0 || path == NULL ||
+        !valid_canvas(frames[0]) || frames[0]->width > UINT16_MAX ||
+        frames[0]->height > UINT16_MAX) {
+        return SKETCH_INVALID_ARGUMENT;
+    }
+    const sketch_canvas *first = frames[0];
+    for (size_t index = 1; index < frame_count; index++) {
+        if (!valid_canvas(frames[index]) || frames[index]->width != first->width ||
+            frames[index]->height != first->height) {
+            return SKETCH_INVALID_ARGUMENT;
+        }
+    }
+
+    FILE *output = fopen(path, "wb");
+    if (output == NULL) {
+        return SKETCH_IO_ERROR;
+    }
+    bool success = fwrite("GIF89a", 1, 6, output) == 6 &&
+                   gif_write_le16(output, (uint16_t)first->width) &&
+                   gif_write_le16(output, (uint16_t)first->height) &&
+                   gif_write_byte(output, 0xf7) && gif_write_byte(output, 0) &&
+                   gif_write_byte(output, 0);
+    for (unsigned colour = 0; success && colour <= UINT8_MAX; colour++) {
+        success = gif_write_byte(output, (uint8_t)colour) &&
+                  gif_write_byte(output, (uint8_t)colour) &&
+                  gif_write_byte(output, (uint8_t)colour);
+    }
+    const uint8_t loop_extension[] = {0x21, 0xff, 0x0b, 'N',  'E', 'T', 'S',
+                                      'C',  'A',  'P',  'E',  '2', '.', '0',
+                                      0x03, 0x01, 0x00, 0x00, 0x00};
+    success = success && fwrite(loop_extension, 1, sizeof(loop_extension), output) ==
+                             sizeof(loop_extension);
+    for (size_t index = 0; success && index < frame_count; index++) {
+        success = gif_write_byte(output, 0x21) && gif_write_byte(output, 0xf9) &&
+                  gif_write_byte(output, 0x04) && gif_write_byte(output, 0x00) &&
+                  gif_write_le16(output, delay_centiseconds) &&
+                  gif_write_byte(output, 0x00) && gif_write_byte(output, 0x00) &&
+                  gif_write_byte(output, 0x2c) && gif_write_le16(output, 0) &&
+                  gif_write_le16(output, 0) &&
+                  gif_write_le16(output, (uint16_t)first->width) &&
+                  gif_write_le16(output, (uint16_t)first->height) &&
+                  gif_write_byte(output, 0x00) &&
+                  gif_write_indices(output, frames[index], invert);
+    }
+    success = success && gif_write_byte(output, 0x3b);
+    if (fclose(output) != 0) {
+        success = false;
+    }
+    return success ? SKETCH_OK : SKETCH_IO_ERROR;
+}
+
 static sketch_status inspect_stream(FILE *output, const uint8_t *bytes, size_t length) {
     decoder_state state = {0};
     size_t frame = 0;
