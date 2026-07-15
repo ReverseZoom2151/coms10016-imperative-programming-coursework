@@ -22,7 +22,9 @@ jobs:
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/generic-list-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/sketch-tests
+          valgrind --leak-check=full --error-exitcode=1 ./build/robustness-tests
       - name: Build and test with sanitizers
         run: |
           cmake -S . -B build-sanitized -G Ninja -DCMAKE_BUILD_TYPE=Debug -DTOOLKIT_ENABLE_SANITIZERS=ON
