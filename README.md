@@ -129,9 +129,10 @@ stream without a GUI framework.
   build/sketch-story.svg build/sketch-story.gif
 ```
 
-The visualizer decodes real prefixes of `gallery.sk`. The high-resolution
-explainer displays those six C-generated decoder frames at presentation scale;
-it does not redraw or invent the sketch.
+The explainer first shows the actual `gallery.sk` byte stream. It then pairs
+each C-generated canvas checkpoint with the matching `sketch-inspect` decoder
+event: byte offset, opcode, cursor movement, and colour. The canvas is never
+redrawn or invented by the animation.
 
 <p align="center">
   <img src="examples/sketch-explainer.gif" alt="High-resolution animation of compact sketch drawing checkpoints" width="800" />

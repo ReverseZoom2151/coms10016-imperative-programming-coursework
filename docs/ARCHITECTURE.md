@@ -22,7 +22,7 @@ commands.
 - **Visual stories** run real binary, list, sketch, and renderer operations,
   then emit labelled SVG diagnostics plus state-progression GIFs.
   `toolkit-visualize` is the deterministic C boundary; the README uses the
-  matching high-resolution Manim explainers from `animations/`.
+  matching high-resolution animation pipeline from `animations/`.
 
 The shared canvas is the meaningful connection between the visual components:
 sketches create pixels from a compact instruction stream; the renderer creates

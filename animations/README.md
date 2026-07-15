@@ -26,8 +26,8 @@ video files are derived output.
 - **Binary** uses the `i8 -12` fixture and exact two's-complement bits from the
   C binary visualizer.
 - **Lists** uses the exact four-operation sequence printed by `list-demo`.
-- **Sketches** begins with the actual `gallery.sk` byte stream, then composes
-  the six resulting C decoder frames without redrawing or labelling over them.
+- **Sketches** begins with the actual `gallery.sk` byte stream, then pairs each
+  of the six C decoder frames with its matching `sketch-inspect` event.
 - **Renderer** captures `donut-animate --incremental 80 24`, strips only ANSI
   cursor-control sequences, and encodes its real 80 × 24 ASCII frames directly
   as the standalone README GIF—without Manim.

@@ -2,8 +2,8 @@
 
 `toolkit-visualize` produces deterministic diagnostic media from actual toolkit
 operations. It writes an explanatory SVG and a GIF that shows the state
-sequence; the README uses the corresponding high-resolution Manim explainers
-from [`animations/`](../animations/).
+sequence; the README uses corresponding high-resolution explainers from
+[`animations/`](../animations/).
 
 ```bash
 ./build/toolkit-visualize binary build/binary-story.svg build/binary-story.gif
@@ -25,5 +25,5 @@ from [`animations/`](../animations/).
 
 The visualizer intentionally remains a terminal tool and depends only on the
 toolkit’s canvas and export code. Its SVG output is for vector diagnostics, not
-for README presentation; the Manim companion supplies the polished motion
+for README presentation; the animation companion supplies the polished motion
 explainers.

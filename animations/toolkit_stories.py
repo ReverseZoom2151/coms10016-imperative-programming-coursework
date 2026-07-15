@@ -5,6 +5,7 @@ fixtures; SketchStory begins with the actual sketch byte stream and then shows
 the C-generated decoder frames.
 """
 
+import json
 from pathlib import Path
 
 from manim import (  # type: ignore[import-not-found]
@@ -19,7 +20,7 @@ from manim import (  # type: ignore[import-not-found]
     Create,
     FadeIn,
     FadeOut,
-    FadeTransform,
+    Group,
     ImageMobject,
     Rectangle,
     Scene,
@@ -103,7 +104,15 @@ class ListStory(Scene):
 
 def sketch_frame(index: int) -> ImageMobject:
     path = ASSET_DIRECTORY / "sketch-frames" / f"frame-{index:02d}.png"
-    return ImageMobject(str(path)).scale_to_fit_width(10.7)
+    return ImageMobject(str(path)).scale_to_fit_width(6.2)
+
+
+def trace_panel(summary: str) -> VGroup:
+    panel = Rectangle(width=5.4, height=3.7, color=BLUE, fill_opacity=0.1)
+    text = Text(summary, font="DejaVu Sans Mono", font_size=20, color=BLUE)
+    text.move_to(panel)
+    label = Text("decoded instruction", font_size=22, color=BLUE).next_to(panel, UP, buff=0.18)
+    return VGroup(label, panel, text)
 
 
 class SketchStory(Scene):
@@ -113,6 +122,9 @@ class SketchStory(Scene):
         paths = sorted((ASSET_DIRECTORY / "sketch-frames").glob("frame-*.png"))
         if not paths:
             raise RuntimeError("run animations/render.sh before rendering SketchStory")
+        trace = json.loads((ASSET_DIRECTORY / "sketch-trace.json").read_text(encoding="utf-8"))
+        if len(trace) != len(paths):
+            raise RuntimeError("sketch trace and frame counts differ")
         bytes_text = GALLERY_PATH.read_bytes().hex(" ")
         byte_rows = "\n".join(
             bytes_text[index : index + 47] for index in range(0, len(bytes_text), 48)
@@ -121,12 +133,24 @@ class SketchStory(Scene):
             Text("gallery.sk", font="DejaVu Sans Mono", font_size=38, color=ORANGE),
             Text(byte_rows, font="DejaVu Sans Mono", font_size=19, color=BLUE),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.45)
-        current = sketch_frame(1)
+        current_trace = trace_panel(trace[0])
+        current_frame = Group(
+            Text("C canvas after this byte", font_size=22, color=GREEN), sketch_frame(1)
+        ).arrange(DOWN, buff=0.18)
+        current = Group(current_trace, current_frame).arrange(RIGHT, buff=0.65)
         self.play(Write(source))
         self.wait(0.6)
         self.play(FadeOut(source), FadeIn(current))
         for index in range(2, len(paths) + 1):
-            next_frame = sketch_frame(index)
-            self.play(FadeTransform(current, next_frame), run_time=0.65)
-            current = next_frame
+            next_trace = trace_panel(trace[index - 1])
+            next_frame = Group(
+                Text("C canvas after this byte", font_size=22, color=GREEN), sketch_frame(index)
+            ).arrange(DOWN, buff=0.18)
+            next_state = Group(next_trace, next_frame).arrange(RIGHT, buff=0.65)
+            # ImageMobject state does not support Manim's saved-state transform
+            # protocol reliably.  A cross-fade keeps the transition legible and
+            # lets the inspected decoder event and its C-rendered canvas update
+            # together.
+            self.play(FadeOut(current), FadeIn(next_state), run_time=0.65)
+            current = next_state
         self.wait(1)

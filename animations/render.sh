@@ -15,6 +15,9 @@ cmake --build build
 mkdir -p "${input_directory}/sketch-frames"
 ./build/toolkit-visualize sketch examples/gallery.sk \
   "${input_directory}/sketch-diagnostic.svg" "${input_directory}/sketch-source.gif"
+./build/sketch-inspect examples/gallery.sk > "${input_directory}/sketch.trace"
+"${python_command}" animations/prepare_sketch_trace.py \
+  "${input_directory}/sketch.trace" "${input_directory}/sketch-trace.json" 6
 ffmpeg -y -i "${input_directory}/sketch-source.gif" \
   -vsync 0 -vf "scale=768:480:flags=neighbor" \
   "${input_directory}/sketch-frames/frame-%02d.png"
