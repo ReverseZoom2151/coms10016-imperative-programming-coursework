@@ -1,6 +1,6 @@
 # Architecture
 
-The maintained project is a portable C17 command-line toolkit. Reusable logic
+The maintained project is a portable C23 command-line toolkit. Reusable logic
 lives in `src/` with public headers in `include/`; `app/` contains thin command
 boundaries and `test/` contains executable regression tests.
 
