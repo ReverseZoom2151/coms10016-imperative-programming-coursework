@@ -22,6 +22,8 @@ jobs:
         run: ctest --test-dir build --output-on-failure
       - name: Check for memory errors
         run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/list-demo
+          valgrind --leak-check=full --error-exitcode=1 ./build/donut-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
           valgrind --leak-check=full --error-exitcode=1 ./build/generic-list-tests

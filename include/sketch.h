@@ -25,6 +25,8 @@ void sketch_canvas_clear(sketch_canvas *canvas, uint8_t value);
 size_t sketch_canvas_width(const sketch_canvas *canvas);
 size_t sketch_canvas_height(const sketch_canvas *canvas);
 uint8_t sketch_canvas_pixel(const sketch_canvas *canvas, size_t x, size_t y);
+/* Set one grayscale pixel. Coordinates outside the canvas are ignored. */
+void sketch_canvas_set_pixel(sketch_canvas *canvas, size_t x, size_t y, uint8_t value);
 
 /* Decode the compact two-bit-opcode sketch format into canvas. */
 sketch_status sketch_decode_bytes(sketch_canvas *canvas, const uint8_t *bytes,

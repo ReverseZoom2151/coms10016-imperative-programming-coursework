@@ -15,9 +15,13 @@ add_library(imperative_core STATIC
     src/list.c
     src/generic_list.c
     src/sketch.c
+    src/donut.c
 )
 target_compile_options(imperative_core PUBLIC -Wall -Wextra -Wpedantic -Werror)
 target_include_directories(imperative_core PUBLIC include)
+if(NOT MSVC)
+    target_link_libraries(imperative_core PUBLIC m)
+endif()
 
 if(TOOLKIT_ENABLE_SANITIZERS AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(imperative_core PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
@@ -37,6 +41,13 @@ target_link_libraries(binary-tool PRIVATE imperative_core)
 add_executable(list-demo app/list_demo_main.c)
 target_link_libraries(list-demo PRIVATE imperative_core)
 add_test(NAME list-demo COMMAND list-demo)
+
+add_executable(donut-demo app/donut_main.c)
+target_link_libraries(donut-demo PRIVATE imperative_core)
+
+add_executable(donut-tests test/donut_test.c)
+target_link_libraries(donut-tests PRIVATE imperative_core)
+add_test(NAME donut-tests COMMAND donut-tests)
 
 add_executable(binary-tests test/binary_test.c)
 target_link_libraries(binary-tests PRIVATE imperative_core)

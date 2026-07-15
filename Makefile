@@ -10,6 +10,8 @@ test: build
 	ctest --test-dir build --output-on-failure
 
 check: test
+	valgrind --leak-check=full --error-exitcode=1 ./build/list-demo
+	valgrind --leak-check=full --error-exitcode=1 ./build/donut-tests
 	valgrind --leak-check=full --error-exitcode=1 ./build/binary-tests
 	valgrind --leak-check=full --error-exitcode=1 ./build/list-tests
 	valgrind --leak-check=full --error-exitcode=1 ./build/generic-list-tests
@@ -27,6 +29,7 @@ coverage:
 	cmake --build build-coverage
 	ctest --test-dir build-coverage --output-on-failure
 	gcov -o build-coverage/CMakeFiles/imperative_core.dir/src/binary.c.gcda src/binary.c
+	gcov -o build-coverage/CMakeFiles/imperative_core.dir/src/donut.c.gcda src/donut.c
 	gcov -o build-coverage/CMakeFiles/imperative_core.dir/src/generic_list.c.gcda src/generic_list.c
 	gcov -o build-coverage/CMakeFiles/imperative_core.dir/src/list.c.gcda src/list.c
 	gcov -o build-coverage/CMakeFiles/imperative_core.dir/src/sketch.c.gcda src/sketch.c

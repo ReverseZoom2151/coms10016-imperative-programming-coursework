@@ -286,6 +286,12 @@ uint8_t sketch_canvas_pixel(const sketch_canvas *canvas, size_t x, size_t y) {
     return canvas->pixels[y * canvas->width + x];
 }
 
+void sketch_canvas_set_pixel(sketch_canvas *canvas, size_t x, size_t y, uint8_t value) {
+    if (valid_canvas(canvas) && x < canvas->width && y < canvas->height) {
+        canvas->pixels[y * canvas->width + x] = value;
+    }
+}
+
 sketch_status sketch_decode_bytes(sketch_canvas *canvas, const uint8_t *bytes,
                                   size_t length) {
     if (!valid_canvas(canvas) || (bytes == NULL && length != 0)) {
