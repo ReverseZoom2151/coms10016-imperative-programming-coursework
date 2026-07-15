@@ -59,20 +59,90 @@ static void set_pixel(sketch_canvas *canvas, int x, int y, uint8_t colour) {
     canvas->pixels[(size_t)y * canvas->width + (size_t)x] = colour;
 }
 
+static unsigned point_outcode(int x, int y, int right, int bottom) {
+    unsigned code = 0;
+    if (x < 0) {
+        code |= 1;
+    } else if (x > right) {
+        code |= 2;
+    }
+    if (y < 0) {
+        code |= 4;
+    } else if (y > bottom) {
+        code |= 8;
+    }
+    return code;
+}
+
+static bool clip_line(const sketch_canvas *canvas, int *x0, int *y0, int *x1,
+                      int *y1) {
+    int right = canvas->width - 1 > INT_MAX ? INT_MAX : (int)(canvas->width - 1);
+    int bottom = canvas->height - 1 > INT_MAX ? INT_MAX : (int)(canvas->height - 1);
+    unsigned out0 = point_outcode(*x0, *y0, right, bottom);
+    unsigned out1 = point_outcode(*x1, *y1, right, bottom);
+
+    while ((out0 | out1) != 0) {
+        if ((out0 & out1) != 0) {
+            return false;
+        }
+        unsigned outside = out0 != 0 ? out0 : out1;
+        int64_t x = 0;
+        int64_t y = 0;
+        if ((outside & 4) != 0) {
+            if (*y1 == *y0) {
+                return false;
+            }
+            x = (int64_t)*x0 + ((int64_t)*x1 - *x0) * -(*y0) / (*y1 - *y0);
+            y = 0;
+        } else if ((outside & 8) != 0) {
+            if (*y1 == *y0) {
+                return false;
+            }
+            x = (int64_t)*x0 + ((int64_t)*x1 - *x0) * (bottom - *y0) / (*y1 - *y0);
+            y = bottom;
+        } else if ((outside & 2) != 0) {
+            if (*x1 == *x0) {
+                return false;
+            }
+            x = right;
+            y = (int64_t)*y0 + ((int64_t)*y1 - *y0) * (right - *x0) / (*x1 - *x0);
+        } else {
+            if (*x1 == *x0) {
+                return false;
+            }
+            x = 0;
+            y = (int64_t)*y0 + ((int64_t)*y1 - *y0) * -(*x0) / (*x1 - *x0);
+        }
+        if (outside == out0) {
+            *x0 = (int)x;
+            *y0 = (int)y;
+            out0 = point_outcode(*x0, *y0, right, bottom);
+        } else {
+            *x1 = (int)x;
+            *y1 = (int)y;
+            out1 = point_outcode(*x1, *y1, right, bottom);
+        }
+    }
+    return true;
+}
+
 static void draw_line(sketch_canvas *canvas, int x0, int y0, int x1, int y1,
                       uint8_t colour) {
-    int dx = abs(x1 - x0);
+    if (!clip_line(canvas, &x0, &y0, &x1, &y1)) {
+        return;
+    }
+    int64_t dx = llabs((int64_t)x1 - x0);
     int step_x = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0);
+    int64_t dy = -llabs((int64_t)y1 - y0);
     int step_y = y0 < y1 ? 1 : -1;
-    int error = dx + dy;
+    int64_t error = dx + dy;
 
     for (;;) {
         set_pixel(canvas, x0, y0, colour);
         if (x0 == x1 && y0 == y1) {
             return;
         }
-        int doubled_error = 2 * error;
+        int64_t doubled_error = 2 * error;
         if (doubled_error >= dy) {
             error += dy;
             x0 += step_x;
@@ -90,9 +160,19 @@ static void draw_block(sketch_canvas *canvas, int x0, int y0, int x1, int y1,
     int right = x0 < x1 ? x1 : x0;
     int top = y0 < y1 ? y0 : y1;
     int bottom = y0 < y1 ? y1 : y0;
-    for (int y = top; y <= bottom; y++) {
-        for (int x = left; x <= right; x++) {
-            set_pixel(canvas, x, y, colour);
+    int canvas_right = canvas->width - 1 > INT_MAX ? INT_MAX : (int)(canvas->width - 1);
+    int canvas_bottom =
+        canvas->height - 1 > INT_MAX ? INT_MAX : (int)(canvas->height - 1);
+    if (right < 0 || bottom < 0 || left > canvas_right || top > canvas_bottom) {
+        return;
+    }
+    left = left < 0 ? 0 : left;
+    right = right > canvas_right ? canvas_right : right;
+    top = top < 0 ? 0 : top;
+    bottom = bottom > canvas_bottom ? canvas_bottom : bottom;
+    for (int64_t y = top; y <= bottom; y++) {
+        for (int64_t x = left; x <= right; x++) {
+            set_pixel(canvas, (int)x, (int)y, colour);
         }
     }
 }
