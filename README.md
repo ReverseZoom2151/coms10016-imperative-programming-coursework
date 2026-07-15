@@ -12,10 +12,6 @@ This repository is a toolkit, not one monolithic program. It contains four
 independent C components that share the same approach: explicit state, thin
 command-line boundaries, strict validation, and reproducible output.
 
-<p align="center">
-  <img src="examples/toolkit-map.svg" alt="Component map showing binary, list, and sketch tools with their inputs and outputs" width="900" />
-</p>
-
 | Component | Input | What it demonstrates | Output |
 | --- | --- | --- | --- |
 | **Binary** | Decimal, binary, or hexadecimal values | Fixed widths, range validation, and two's-complement interpretation | Bits, grouped bits, hex, or an explanation |
