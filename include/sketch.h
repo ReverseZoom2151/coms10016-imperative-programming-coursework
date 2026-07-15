@@ -2,6 +2,7 @@
 #define IMPERATIVE_TOOLKIT_SKETCH_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -15,6 +16,11 @@ typedef enum {
     SKETCH_MALFORMED_STREAM,
     SKETCH_OUT_OF_RANGE
 } sketch_status;
+
+typedef enum {
+    SKETCH_PGM_BINARY,
+    SKETCH_PGM_PLAIN
+} sketch_pgm_format;
 
 sketch_canvas *sketch_canvas_create(size_t width, size_t height);
 void sketch_canvas_destroy(sketch_canvas *canvas);
@@ -30,6 +36,16 @@ sketch_status sketch_decode_file(sketch_canvas *canvas, const char *path);
 
 sketch_status sketch_write_ascii(const sketch_canvas *canvas, FILE *output);
 sketch_status sketch_write_pgm(const sketch_canvas *canvas, const char *path);
+/* Write P5 (binary) or P2 (plain text) PGM, with optional inversion and scaling. */
+sketch_status sketch_write_pgm_options(const sketch_canvas *canvas,
+                                       const char *path,
+                                       sketch_pgm_format format, bool invert,
+                                       size_t scale);
+
+/* Print a deterministic, human-readable execution trace without rasterising. */
+sketch_status sketch_inspect_bytes(FILE *output, const uint8_t *bytes,
+                                   size_t length);
+sketch_status sketch_inspect_file(FILE *output, const char *path);
 const char *sketch_status_message(sketch_status status);
 
 #endif

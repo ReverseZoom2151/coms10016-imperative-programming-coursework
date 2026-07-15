@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 int main(void) {
     /* Set black, move down, then draw a horizontal line. */
@@ -32,6 +34,28 @@ int main(void) {
 
     assert(sketch_decode_bytes(canvas, (const uint8_t[]){0x3f}, 1) ==
            SKETCH_MALFORMED_STREAM);
+
+    FILE *trace = tmpfile();
+    assert(trace != NULL);
+    const uint8_t inspected[] = {0xc0, 0x03, 0x41, 0x81, 0x08};
+    assert(sketch_inspect_bytes(trace, inspected, sizeof(inspected)) == SKETCH_OK);
+    assert(fseek(trace, 0, SEEK_SET) == 0);
+    char trace_text[512] = {0};
+    assert(fread(trace_text, 1, sizeof(trace_text) - 1, trace) > 0);
+    assert(strstr(trace_text, "TOOL COLOUR") != NULL);
+    assert(strstr(trace_text, "line (0,0) -> (1,1), colour=0") != NULL);
+    assert(strstr(trace_text, "NEXT_FRAME") != NULL);
+    assert(fclose(trace) == 0);
+
+    assert(sketch_write_pgm_options(canvas, "sketch-test.pgm", SKETCH_PGM_PLAIN,
+                                    true, 2) == SKETCH_OK);
+    FILE *pgm = fopen("sketch-test.pgm", "rb");
+    assert(pgm != NULL);
+    char pgm_header[32] = {0};
+    assert(fread(pgm_header, 1, sizeof(pgm_header) - 1, pgm) > 0);
+    assert(strncmp(pgm_header, "P2\n10 10\n255\n", 13) == 0);
+    assert(fclose(pgm) == 0);
+    assert(remove("sketch-test.pgm") == 0);
     sketch_canvas_destroy(canvas);
     return 0;
 }

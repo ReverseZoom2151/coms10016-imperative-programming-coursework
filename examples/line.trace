@@ -1,0 +1,5 @@
+0000  0xC0  DATA 0      -> data=0 | state cursor=(0,0) target=(0,0) tool=line colour=0 frame=0
+0001  0x03  TOOL COLOUR     data=0 | state cursor=(0,0) target=(0,0) tool=line colour=0 frame=0
+0002  0x83  DY +3 -> line (0,0) -> (0,3), colour=0 | state cursor=(0,3) target=(0,3) tool=line colour=0 frame=0
+0003  0x42  DX +2 -> target=(2,3) | state cursor=(0,3) target=(2,3) tool=line colour=0 frame=0
+0004  0x80  DY +0 -> line (0,3) -> (2,3), colour=0 | state cursor=(2,3) target=(2,3) tool=line colour=0 frame=0
